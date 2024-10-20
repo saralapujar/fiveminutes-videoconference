@@ -23,6 +23,7 @@ import {
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { useSession } from 'next-auth/react';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -34,16 +35,17 @@ export function PageClientImpl(props: {
   hq: boolean;
   codec: VideoCodec;
 }) {
+  const { data: session } = useSession();
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
   );
   const preJoinDefaults = React.useMemo(() => {
     return {
-      username: '',
+      username: session?.user?.name || '',
       videoEnabled: true,
       audioEnabled: true,
     };
-  }, []);
+  }, [session]);
   const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
     undefined,
   );

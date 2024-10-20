@@ -1,9 +1,11 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
+import { GoogleLoginButton } from '@/app/components/GoogleLoginButton';
+import { useSession, signOut } from 'next-auth/react';
 
 function Tabs(props: React.PropsWithChildren<{}>) {
   const searchParams = useSearchParams();
@@ -53,8 +55,9 @@ function DemoMeetingTab(props: { label: string }) {
     }
   };
   return (
+    <><SignInButton />
     <div className={styles.tabContent}>
-      <p style={{ margin: 0 }}>Try LiveKit Meet for free with our live demo project.</p>
+      {/* <p style={{ margin: 0 }}>Try LiveKit Meet for free with our live demo project.</p> */}
       <button style={{ marginTop: '1rem' }} className="lk-button" onClick={startMeeting}>
         Start Meeting
       </button>
@@ -80,7 +83,7 @@ function DemoMeetingTab(props: { label: string }) {
           </div>
         )}
       </div>
-    </div>
+    </div></>
   );
 }
 
@@ -104,25 +107,24 @@ function CustomConnectionTab(props: { label: string }) {
     }
   };
   return (
+    
     <form className={styles.tabContent} onSubmit={onSubmit}>
-      <p style={{ marginTop: 0 }}>
-        Connect LiveKit Meet with a custom server using LiveKit Cloud or LiveKit Server.
-      </p>
+      {/* <p style={{ marginTop: 0 }}>
+      Connect LiveKit Meet with a custom server using LiveKit Cloud or LiveKit Server.
+    </p> */}
       <input
         id="serverUrl"
         name="serverUrl"
         type="url"
         placeholder="LiveKit Server URL: wss://*.livekit.cloud"
-        required
-      />
+        required />
       <textarea
         id="token"
         name="token"
         placeholder="Token"
         required
         rows={5}
-        style={{ padding: '1px 2px', fontSize: 'inherit', lineHeight: 'inherit' }}
-      />
+        style={{ padding: '1px 2px', fontSize: 'inherit', lineHeight: 'inherit' }} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
           <input
@@ -140,15 +142,13 @@ function CustomConnectionTab(props: { label: string }) {
               id="passphrase"
               type="password"
               value={sharedPassphrase}
-              onChange={(ev) => setSharedPassphrase(ev.target.value)}
-            />
+              onChange={(ev) => setSharedPassphrase(ev.target.value)} />
           </div>
         )}
       </div>
 
       <hr
-        style={{ width: '100%', borderColor: 'rgba(255, 255, 255, 0.15)', marginBlock: '1rem' }}
-      />
+        style={{ width: '100%', borderColor: 'rgba(255, 255, 255, 0.15)', marginBlock: '1rem' }} />
       <button
         style={{ paddingInline: '1.25rem', width: '100%' }}
         className="lk-button"
@@ -160,23 +160,34 @@ function CustomConnectionTab(props: { label: string }) {
   );
 }
 
+function SignInButton() {
+  const { data: session } = useSession();
+
+  React.useEffect(() => {
+    if (session) {
+      console.log('User session:', session);
+    }
+  }, [session]);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+      {session ? (
+        <button className="lk-button" onClick={() => signOut()}>
+          Sign out
+        </button>
+      ) : (
+        <GoogleLoginButton />
+      )}
+    </div>
+  );
+}
+
 export default function Page() {
   return (
     <>
       <main className={styles.main} data-lk-theme="default">
         <div className="header">
           <img src="/images/livekit-meet-home.svg" alt="LiveKit Meet" width="360" height="45" />
-          <h2>
-            Open source video conferencing app built on{' '}
-            <a href="https://github.com/livekit/components-js?ref=meet" rel="noopener">
-              LiveKit&nbsp;Components
-            </a>
-            ,{' '}
-            <a href="https://livekit.io/cloud?ref=meet" rel="noopener">
-              LiveKit&nbsp;Cloud
-            </a>{' '}
-            and Next.js.
-          </h2>
         </div>
         <Suspense fallback="Loading">
           <Tabs>
@@ -184,17 +195,10 @@ export default function Page() {
             <CustomConnectionTab label="Custom" />
           </Tabs>
         </Suspense>
+        
       </main>
       <footer data-lk-theme="default">
-        Hosted on{' '}
-        <a href="https://livekit.io/cloud?ref=meet" rel="noopener">
-          LiveKit Cloud
-        </a>
-        . Source code on{' '}
-        <a href="https://github.com/livekit/meet?ref=meet" rel="noopener">
-          GitHub
-        </a>
-        .
+        Developed by Five Minutes
       </footer>
     </>
   );
