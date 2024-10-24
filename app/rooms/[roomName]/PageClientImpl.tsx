@@ -10,7 +10,14 @@ import {
   LiveKitRoom,
   LocalUserChoices,
   PreJoin,
-  VideoConference,
+  GridLayout,
+  ParticipantTile,
+  ControlBar,
+  useTracks,
+  RoomAudioRenderer,
+  TrackReference,
+  VideoTrack,
+  Track,
 } from '@livekit/components-react';
 import {
   ExternalE2EEKeyProvider,
@@ -23,7 +30,6 @@ import {
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React from 'react';
-import { useSession } from 'next-auth/react';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -35,17 +41,16 @@ export function PageClientImpl(props: {
   hq: boolean;
   codec: VideoCodec;
 }) {
-  const { data: session } = useSession();
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
   );
   const preJoinDefaults = React.useMemo(() => {
     return {
-      username: session?.user?.name || '',
+      username: '',
       videoEnabled: true,
       audioEnabled: true,
     };
-  }, [session]);
+  }, []);
   const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
     undefined,
   );
@@ -65,7 +70,7 @@ export function PageClientImpl(props: {
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
 
   return (
-    <main data-lk-theme="default" style={{ height: '100%' }}>
+    <div style={{ height: '100%' }}>
       {connectionDetails === undefined || preJoinChoices === undefined ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
           <PreJoin
@@ -81,9 +86,36 @@ export function PageClientImpl(props: {
           options={{ codec: props.codec, hq: props.hq }}
         />
       )}
-    </main>
+    </div>
   );
 }
+
+const CustomVideoConference = () => {
+  const tracks = useTracks(
+    [
+      { source: 'camera', withPlaceholder: true },
+    ],
+    { onlySubscribed: false }
+  );
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <GridLayout
+          tracks={tracks}
+          style={{
+            height: '100%',
+          }}
+        >
+          <ParticipantTile />
+        </GridLayout>
+      </div>
+      <ControlBar variation="verbose" controls={{ screenShare: false }}>
+        {/* Basic controls are included in ControlBar by default */}
+      </ControlBar>
+    </div>
+  );
+};
 
 function VideoConferenceComponent(props: {
   userChoices: LocalUserChoices;
@@ -180,26 +212,25 @@ function VideoConferenceComponent(props: {
   }, []);
 
   return (
-    <>
-      <LiveKitRoom
-        connect={e2eeSetupComplete}
-        room={room}
-        token={props.connectionDetails.participantToken}
-        serverUrl={props.connectionDetails.serverUrl}
-        connectOptions={connectOptions}
-        video={props.userChoices.videoEnabled}
-        audio={props.userChoices.audioEnabled}
-        onDisconnected={handleOnLeave}
-        onEncryptionError={handleEncryptionError}
-        onError={handleError}
-      >
-        <VideoConference
-          chatMessageFormatter={formatChatMessageLinks}
-          SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
-        />
-        <DebugMode />
-        <RecordingIndicator />
-      </LiveKitRoom>
-    </>
+    <LiveKitRoom
+      connect={e2eeSetupComplete}
+      room={room}
+      token={props.connectionDetails.participantToken}
+      serverUrl={props.connectionDetails.serverUrl}
+      connectOptions={connectOptions}
+      video={props.userChoices.videoEnabled}
+      audio={props.userChoices.audioEnabled}
+      onDisconnected={handleOnLeave}
+      onEncryptionError={handleEncryptionError}
+      onError={handleError}
+    >
+      <CustomVideoConference />
+      <ControlBar variation="verbose" controls={{ screenShare: false }}>
+        {/* Basic controls are included in ControlBar by default */}
+      </ControlBar>
+      <RoomAudioRenderer />
+      <DebugMode />
+      <RecordingIndicator />
+    </LiveKitRoom>
   );
 }
