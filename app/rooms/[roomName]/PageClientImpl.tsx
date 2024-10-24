@@ -26,6 +26,7 @@ import {
   Room,
   DeviceUnsupportedError,
   RoomConnectOptions,
+  Track
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -90,12 +91,14 @@ export function PageClientImpl(props: {
 }
 
 const CustomVideoConference = () => {
-  const tracks = useTracks(
-    [
-      { source: 'camera', withPlaceholder: true },
-    ],
-    { onlySubscribed: false }
-  );
+  const tracks = useTracks([Track.Source.Camera]);
+
+  // const tracks = useTracks(
+  //   [
+  //     { source: 'camera', withPlaceholder: true },
+  //   ],
+  //   { onlySubscribed: false }
+  // );
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
