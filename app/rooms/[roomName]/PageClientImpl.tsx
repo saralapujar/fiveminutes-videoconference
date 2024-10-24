@@ -93,13 +93,7 @@ export function PageClientImpl(props: {
 
 const CustomVideoConference = () => {
   const tracks = useTracks([Track.Source.Camera]);
-
-  // const tracks = useTracks(
-  //   [
-  //     { source: 'camera', withPlaceholder: true },
-  //   ],
-  //   { onlySubscribed: false }
-  // );
+  const shareScreenEnabled = process.env.NEXT_PUBLIC_SHARESCREEN_ENABLED === 'true';
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -113,8 +107,7 @@ const CustomVideoConference = () => {
           <ParticipantTile />
         </GridLayout>
       </div>
-      <ControlBar variation="verbose" controls={{ screenShare: false }}>
-        {/* Basic controls are included in ControlBar by default */}
+      <ControlBar variation="verbose" controls={{ screenShare: shareScreenEnabled }}>
       </ControlBar>
     </div>
   );
@@ -228,9 +221,9 @@ function VideoConferenceComponent(props: {
       onError={handleError}
     >
       <CustomVideoConference />
-      <ControlBar variation="verbose" controls={{ screenShare: false }}>
-        {/* Basic controls are included in ControlBar by default */}
-      </ControlBar>
+      {/* <ControlBar variation="verbose" controls={{ screenShare: false }}>
+        
+      </ControlBar> */}
       <RoomAudioRenderer />
       <DebugMode />
       <RecordingIndicator />
