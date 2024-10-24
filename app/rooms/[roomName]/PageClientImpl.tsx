@@ -17,7 +17,6 @@ import {
   RoomAudioRenderer,
   TrackReference,
   VideoTrack,
-  Track,
 } from '@livekit/components-react';
 import {
   ExternalE2EEKeyProvider,
