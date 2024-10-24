@@ -4,8 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useState, useEffect } from 'react';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
-import { GoogleLoginButton } from '@/app/components/GoogleLoginButton';
-import { useSession, signOut } from 'next-auth/react';
 
 function Tabs(props: React.PropsWithChildren<{}>) {
   const searchParams = useSearchParams();
@@ -55,7 +53,7 @@ function DemoMeetingTab(props: { label: string }) {
     }
   };
   return (
-    <><SignInButton />
+    
     <div className={styles.tabContent}>
       {/* <p style={{ margin: 0 }}>Try LiveKit Meet for free with our live demo project.</p> */}
       <button style={{ marginTop: '1rem' }} className="lk-button" onClick={startMeeting}>
@@ -83,7 +81,7 @@ function DemoMeetingTab(props: { label: string }) {
           </div>
         )}
       </div>
-    </div></>
+    </div>
   );
 }
 
@@ -157,28 +155,6 @@ function CustomConnectionTab(props: { label: string }) {
         Connect
       </button>
     </form>
-  );
-}
-
-function SignInButton() {
-  const { data: session } = useSession();
-
-  React.useEffect(() => {
-    if (session) {
-      console.log('User session:', session);
-    }
-  }, [session]);
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
-      {session ? (
-        <button className="lk-button" onClick={() => signOut()}>
-          Sign out
-        </button>
-      ) : (
-        <GoogleLoginButton />
-      )}
-    </div>
   );
 }
 
