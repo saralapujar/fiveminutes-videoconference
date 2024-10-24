@@ -221,9 +221,6 @@ function VideoConferenceComponent(props: {
       onError={handleError}
     >
       <CustomVideoConference />
-      {/* <ControlBar variation="verbose" controls={{ screenShare: false }}>
-        
-      </ControlBar> */}
       <RoomAudioRenderer />
       <DebugMode />
       <RecordingIndicator />
