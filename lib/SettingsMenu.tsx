@@ -10,6 +10,7 @@ import {
 } from '@livekit/components-react';
 import { useKrispNoiseFilter } from '@livekit/components-react/krisp';
 import styles from '../styles/SettingsMenu.module.css';
+import { requestMediaPermission } from './mediaPermissions';
 
 /**
  * @alpha
@@ -82,6 +83,15 @@ export function SettingsMenu(props: SettingsMenuProps) {
     }
   };
 
+  const handleTrackToggle = async (source: Track.Source) => {
+    const mediaType = source === Track.Source.Camera ? 'camera' : 'microphone';
+    const hasPermission = await requestMediaPermission(mediaType);
+    
+    if (!hasPermission) {
+      alert(`Please allow ${mediaType} access in your browser settings to use this feature.`);
+    }
+  };
+
   return (
     <div className="settings-menu" style={{ width: '100%' }} {...props}>
       <div className={styles.tabs}>
@@ -109,7 +119,12 @@ export function SettingsMenu(props: SettingsMenuProps) {
               <>
                 <h3>Camera</h3>
                 <section className="lk-button-group">
-                  <TrackToggle source={Track.Source.Camera}>Camera</TrackToggle>
+                  <TrackToggle 
+                    source={Track.Source.Camera}
+                    onPress={() => handleTrackToggle(Track.Source.Camera)}
+                  >
+                    Camera
+                  </TrackToggle>
                   <div className="lk-button-group-menu">
                     <MediaDeviceMenu kind="videoinput" />
                   </div>
@@ -120,7 +135,12 @@ export function SettingsMenu(props: SettingsMenuProps) {
               <>
                 <h3>Microphone</h3>
                 <section className="lk-button-group">
-                  <TrackToggle source={Track.Source.Microphone}>Microphone</TrackToggle>
+                  <TrackToggle 
+                    source={Track.Source.Microphone}
+                    onPress={() => handleTrackToggle(Track.Source.Microphone)}
+                  >
+                    Microphone
+                  </TrackToggle>
                   <div className="lk-button-group-menu">
                     <MediaDeviceMenu kind="audioinput" />
                   </div>

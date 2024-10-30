@@ -30,6 +30,8 @@ import {
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { Chat } from '@/app/components/Chat';
+import { ParticipantsList } from '@/app/components/ParticipantsList';
 
 
 const CONN_DETAILS_ENDPOINT =
@@ -92,12 +94,17 @@ export function PageClientImpl(props: {
 }
 
 const CustomVideoConference = () => {
-  const tracks = useTracks([Track.Source.Camera]);
+  const tracks = useTracks([
+    Track.Source.Camera,
+    Track.Source.ScreenShare,
+    Track.Source.ScreenShareAudio
+  ]);
   const shareScreenEnabled = process.env.NEXT_PUBLIC_SHARESCREEN_ENABLED === 'true';
+  const chatEnabled = process.env.NEXT_PUBLIC_CHAT_ENABLED === 'true';
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
         <GridLayout
           tracks={tracks}
           style={{
@@ -106,6 +113,8 @@ const CustomVideoConference = () => {
         >
           <ParticipantTile />
         </GridLayout>
+        <ParticipantsList />
+        {chatEnabled && <Chat />}
       </div>
       <ControlBar variation="verbose" controls={{ screenShare: shareScreenEnabled }}>
       </ControlBar>
@@ -206,6 +215,15 @@ function VideoConferenceComponent(props: {
       `Encountered an unexpected encryption error, check the console logs for details: ${error.message}`,
     );
   }, []);
+
+  const handleDisconnected = React.useCallback(() => {
+    // Try to reconnect once before redirecting
+    room.connect(props.connectionDetails.serverUrl, props.connectionDetails.participantToken)
+      .catch((error) => {
+        console.error('Reconnection failed:', error);
+        router.push('/');
+      });
+  }, [room, props.connectionDetails, router]);
 
   return (
     <LiveKitRoom
