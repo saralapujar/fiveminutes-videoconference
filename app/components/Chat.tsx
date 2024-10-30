@@ -70,7 +70,10 @@ export function Chat() {
 
     const encoder = new TextEncoder();
     const data = encoder.encode(JSON.stringify(messageData));
-    room.localParticipant.publishData(data, DataPacket_Kind.RELIABLE);
+    room.localParticipant.publishData(data, {
+      reliable: true  // This is the only valid option in DataPublishOptions
+    });
+    // room.localParticipant.publishData(data, DataPacket_Kind.RELIABLE);
     setMessages((prev) => [...prev, messageData]);
     setInputMessage('');
   }, [inputMessage, localParticipant, room]);

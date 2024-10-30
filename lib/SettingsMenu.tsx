@@ -121,7 +121,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
                 <section className="lk-button-group">
                   <TrackToggle 
                     source={Track.Source.Camera}
-                    onPress={() => handleTrackToggle(Track.Source.Camera)}
+                    onClick={() => handleTrackToggle(Track.Source.Camera)}
                   >
                     Camera
                   </TrackToggle>
@@ -137,7 +137,7 @@ export function SettingsMenu(props: SettingsMenuProps) {
                 <section className="lk-button-group">
                   <TrackToggle 
                     source={Track.Source.Microphone}
-                    onPress={() => handleTrackToggle(Track.Source.Microphone)}
+                    onClick={() => handleTrackToggle(Track.Source.Microphone)}
                   >
                     Microphone
                   </TrackToggle>
