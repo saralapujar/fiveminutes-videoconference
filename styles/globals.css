@@ -65,3 +65,154 @@ h2 a {
 h2 a {
   text-decoration: none;
 }
+
+/* PreJoin form styling */
+.lk-prejoin {
+  background: rgba(0, 0, 0, 0.85);
+  padding: 2rem;
+  border-radius: 12px;
+  min-width: 400px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lk-prejoin-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Style for input fields */
+.lk-prejoin input[type="text"] {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s ease;
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+.lk-prejoin input[type="text"]:focus {
+  border-color: #2D8CFF;
+}
+
+/* Style for device selection buttons */
+.lk-button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.lk-button {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #2D8CFF;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lk-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.lk-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Style for the join button */
+.lk-prejoin-join-button {
+  width: 100%;
+  padding: 12px 24px;
+  margin-top: 1rem;
+  background: #2D8CFF;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lk-prejoin-join-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Style for device selection menus */
+.lk-device-menu {
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.lk-device-menu button {
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.lk-device-menu button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.control-bar {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.control-bar button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .control-bar button {
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    justify-content: center;
+  }
+
+  .control-bar button span {
+    display: none;
+  }
+}
+
+.control-bar button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.control-bar button[data-enabled='false'] {
+  background: #dc2626;
+}

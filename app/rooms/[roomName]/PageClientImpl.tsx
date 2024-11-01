@@ -101,6 +101,18 @@ const CustomVideoConference = () => {
   ]);
   const shareScreenEnabled = process.env.NEXT_PUBLIC_SHARESCREEN_ENABLED === 'true';
   const chatEnabled = process.env.NEXT_PUBLIC_CHAT_ENABLED === 'true';
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -116,8 +128,11 @@ const CustomVideoConference = () => {
         <ParticipantsList />
         {chatEnabled && <Chat />}
       </div>
-      <ControlBar variation="verbose" controls={{ screenShare: shareScreenEnabled }}>
-      </ControlBar>
+      <ControlBar 
+        variation={isMobile ? "minimal" : "verbose"}
+        controls={{ screenShare: shareScreenEnabled }}
+        className="control-bar"
+      />
     </div>
   );
 };
