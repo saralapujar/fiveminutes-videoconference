@@ -17,6 +17,7 @@ import {
   RoomAudioRenderer,
   TrackReference,
   VideoTrack,
+  useRemoteParticipants,
 } from '@livekit/components-react';
 import {
   ExternalE2EEKeyProvider,
@@ -99,9 +100,13 @@ const CustomVideoConference = () => {
     Track.Source.ScreenShare,
     Track.Source.ScreenShareAudio
   ]);
-  const shareScreenEnabled = process.env.NEXT_PUBLIC_SHARESCREEN_ENABLED === 'true';
-  const chatEnabled = process.env.NEXT_PUBLIC_CHAT_ENABLED === 'true';
+  const remoteParticipants = useRemoteParticipants();
   const [isMobile, setIsMobile] = React.useState(false);
+
+  // Add debug logging
+  React.useEffect(() => {
+    console.log('Participants updated in CustomVideoConference:', remoteParticipants);
+  }, [remoteParticipants]);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -126,11 +131,11 @@ const CustomVideoConference = () => {
           <ParticipantTile />
         </GridLayout>
         <ParticipantsList />
-        {chatEnabled && <Chat />}
+        {process.env.NEXT_PUBLIC_CHAT_ENABLED === 'true' && <Chat />}
       </div>
       <ControlBar 
         variation={isMobile ? "minimal" : "verbose"}
-        controls={{ screenShare: shareScreenEnabled }}
+        controls={{ screenShare: process.env.NEXT_PUBLIC_SHARESCREEN_ENABLED === 'true' }}
         className="control-bar"
       />
     </div>
