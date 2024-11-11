@@ -1,33 +1,37 @@
 'use client';
+import createGlobe from "cobe";
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
+import { Navbar } from './components/Navbar';
+import { BackgroundBeams } from './components/ui/background-beams';
 
 function Tabs(props: React.PropsWithChildren<{}>) {
   const searchParams = useSearchParams();
-  const tabIndex = searchParams?.get('tab') === 'custom' ? 1 : 0;
-
+  const [tabIndex, setTabIndex] = useState(searchParams?.get('tab') === 'custom' ? 1 : 0);
   const router = useRouter();
+
+  useEffect(() => {
+    setTabIndex(searchParams?.get('tab') === 'custom' ? 1 : 0);
+  }, [searchParams]);
+
   function onTabSelected(index: number) {
     const tab = index === 1 ? 'custom' : 'demo';
     router.push(`/?tab=${tab}`);
   }
 
-  let tabs = React.Children.map(props.children, (child, index) => {
+  const tabs = React.Children.map(props.children, (child, index) => {
+    if (!React.isValidElement(child)) return null;
+    
     return (
       <button
         className="lk-button"
-        onClick={() => {
-          if (onTabSelected) {
-            onTabSelected(index);
-          }
-        }}
+        onClick={() => onTabSelected(index)}
         aria-pressed={tabIndex === index}
       >
-        {/* @ts-ignore */}
-        {child?.props.label}
+        {child.props.label}
       </button>
     );
   });
@@ -35,8 +39,7 @@ function Tabs(props: React.PropsWithChildren<{}>) {
   return (
     <div className={styles.tabContainer}>
       <div className={styles.tabSelect}>{tabs}</div>
-      {/* @ts-ignore */}
-      {props.children[tabIndex]}
+      {React.Children.toArray(props.children)[tabIndex]}
     </div>
   );
 }
@@ -158,22 +161,85 @@ function CustomConnectionTab(props: { label: string }) {
   );
 }
 
+export const Globe = ({ className }: { className?: string }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+ 
+  useEffect(() => {
+    let phi = 0;
+    if (!canvasRef.current) return;
+ 
+    const globe = createGlobe(canvasRef.current, {
+      devicePixelRatio: window.devicePixelRatio || 2,
+      width: 600 ,
+      height: 600 ,
+      phi: 0,
+      theta: 0,
+      dark: 1,
+      diffuse: 1.2,
+      mapSamples: 16000,
+      mapBrightness: 6,
+      baseColor: [0.3, 0.3, 0.3],
+      markerColor: [0.1, 0.8, 1],
+      glowColor: [1, 1, 1],
+      markers: [
+        { location: [37.7595, -122.4367], size: 0.03 },
+        { location: [40.7128, -74.006], size: 0.1 },
+      ],
+      onRender: (state) => {
+        state.phi = phi;
+        phi += 0.01;
+      },
+    });
+ 
+    return () => globe.destroy();
+  }, []);
+ 
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: '600px',
+        height: '600px',
+        maxWidth: '100%',
+        aspectRatio: '1',
+      }}
+      aria-hidden="true"
+      className={className}
+    />
+  );
+};
+
 export default function Page() {
   return (
     <>
-      <main className={styles.main} data-lk-theme="default">
-        <div className="header">
-          <img src="/images/livekit-meet-home.svg" alt="LiveKit Meet" width="360" height="45" />
+      <Navbar />
+      <main 
+        className={styles.main} 
+        data-lk-theme="default"
+      >
+        <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, zIndex: 0 }}>
+          <BackgroundBeams />
         </div>
-        <Suspense fallback="Loading">
-          <Tabs>
-            <DemoMeetingTab label="Demo" />
-            <CustomConnectionTab label="Custom" />
-          </Tabs>
-        </Suspense>
         
+        <div className={`${styles.contentWrapper} relative z-10 flex flex-col items-center w-full max-w-2xl mx-auto px-4`}>
+          <div className="w-full max-w-[360px]">
+            <Globe className="transform scale-75 sm:scale-100" />
+          </div>
+          
+          <div className="w-full">
+            <Suspense fallback="Loading">
+              <Tabs>
+                <DemoMeetingTab label="Demo" />
+                <CustomConnectionTab label="Custom" />
+              </Tabs>
+            </Suspense>
+          </div>
+        </div>
       </main>
-      <footer data-lk-theme="default">
+      <footer 
+        className="text-center py-4" 
+        data-lk-theme="default"
+      >
         Developed by Five Minutes
       </footer>
     </>
