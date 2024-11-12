@@ -7,7 +7,7 @@ const API_SECRET = process.env.LIVEKIT_API_SECRET;
 const LIVEKIT_URL = process.env.LIVEKIT_URL;
 
 // In-memory store for waiting participants (replace with database in production)
-export const waitingParticipants: Map<string, WaitingParticipant[]> = new Map();
+const waitingParticipants: Map<string, WaitingParticipant[]> = new Map();
 
 export async function GET(request: NextRequest) {
   const roomName = request.nextUrl.searchParams.get('roomName');

@@ -161,7 +161,7 @@ function CustomConnectionTab(props: { label: string }) {
   );
 }
 
-export const Globe = ({ className }: { className?: string }) => {
+const Globe = ({ className }: { className?: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
  
   useEffect(() => {
