@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation';
 import React from 'react';
 import { Chat } from '@/app/components/Chat';
 import { ParticipantsList } from '@/app/components/ParticipantsList';
+import { WaitingRoom } from '@/app/components/WaitingRoom';
 
 
 const CONN_DETAILS_ENDPOINT =
@@ -58,6 +59,8 @@ export function PageClientImpl(props: {
   const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
     undefined,
   );
+  const [isWaiting, setIsWaiting] = React.useState(false);
+  const [room, setRoom] = React.useState<Room | undefined>();
 
   const handlePreJoinSubmit = React.useCallback(async (values: LocalUserChoices) => {
     setPreJoinChoices(values);
@@ -69,9 +72,67 @@ export function PageClientImpl(props: {
     }
     const connectionDetailsResp = await fetch(url.toString());
     const connectionDetailsData = await connectionDetailsResp.json();
+    
+    if (connectionDetailsData.isWaiting) {
+      setIsWaiting(true);
+    }
     setConnectionDetails(connectionDetailsData);
   }, []);
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
+
+  const handleApproval = async (token: string) => {
+    if (connectionDetails) {
+      // Disconnect existing room connection if any
+      if (room) {
+        await room.disconnect();
+      }
+      
+      // Update connection details with new token
+      const newConnectionDetails = {
+        ...connectionDetails,
+        participantToken: token,
+        isWaiting: false  // Important to mark as not waiting
+      };
+      
+      setConnectionDetails(newConnectionDetails);
+      setIsWaiting(false);
+    }
+  };
+
+  const checkWaitingStatus = async (roomName: string, participantName: string) => {
+    try {
+      const response = await fetch(
+        `/api/waiting-room/status?roomName=${roomName}&participantName=${participantName}`
+      );
+      if (!response.ok) throw new Error('Failed to check status');
+      const data = await response.json();
+      return data.approved;
+    } catch (error) {
+      console.error('Error checking waiting status:', error);
+      return false;
+    }
+  };
+
+  const getParticipantToken = async (roomName: string, participantName: string) => {
+    try {
+      const response = await fetch('/api/waiting-room/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomName,
+          participantIdentity: participantName,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to get token');
+      const data = await response.json();
+      return data.token;
+    } catch (error) {
+      console.error('Error getting participant token:', error);
+      throw error;
+    }
+  };
 
   return (
     <div style={{ height: '100%' }}>
@@ -83,6 +144,14 @@ export function PageClientImpl(props: {
             onError={handlePreJoinError}
           />
         </div>
+      ) : isWaiting ? (
+        <WaitingRoom 
+          roomName={props.roomName} 
+          participantName={preJoinChoices.username}
+          onApproved={handleApproval}
+          onCheckStatus={checkWaitingStatus}
+          onGetToken={getParticipantToken}
+        />
       ) : (
         <VideoConferenceComponent
           connectionDetails={connectionDetails}
@@ -227,7 +296,7 @@ function VideoConferenceComponent(props: {
   const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
   const handleError = React.useCallback((error: Error) => {
     console.error(error);
-    alert(`Encountered an unexpected error, check the console logs for details: ${error.message}`);
+    alert(`Encountered an unexpected error, check the console logs for details herw: ${error.message}`);
   }, []);
   const handleEncryptionError = React.useCallback((error: Error) => {
     console.error(error);
@@ -238,12 +307,26 @@ function VideoConferenceComponent(props: {
 
   const handleDisconnected = React.useCallback(() => {
     // Try to reconnect once before redirecting
-    room.connect(props.connectionDetails.serverUrl, props.connectionDetails.participantToken)
-      .catch((error) => {
+    if (props.connectionDetails?.participantToken && props.connectionDetails?.serverUrl) {
+      router.push('/')
+      room?.connect(
+        props.connectionDetails.serverUrl,
+        props.connectionDetails.participantToken.toString()
+      ).catch((error) => {
         console.error('Reconnection failed:', error);
         router.push('/');
       });
+    }
   }, [room, props.connectionDetails, router]);
+
+  React.useEffect(() => {
+    return () => {
+      // Cleanup room connection on unmount
+      if (room.state !== 'disconnected') {
+        room.disconnect();
+      }
+    };
+  }, [room]);
 
   return (
     <LiveKitRoom
@@ -254,9 +337,23 @@ function VideoConferenceComponent(props: {
       connectOptions={connectOptions}
       video={props.userChoices.videoEnabled}
       audio={props.userChoices.audioEnabled}
-      onDisconnected={handleOnLeave}
+      onDisconnected={handleDisconnected}
       onEncryptionError={handleEncryptionError}
-      onError={handleError}
+      onError={(error) => {
+        // Add retry logic for connection errors
+        if (error.message.includes('signal connection')) {
+          console.log('Retrying connection...');
+          setTimeout(() => {
+            room.connect(
+              props.connectionDetails.serverUrl, 
+              props.connectionDetails.participantToken,
+              connectOptions
+            ).catch(handleError);
+          }, 1000);
+        } else {
+          handleError(error);
+        }
+      }}
     >
       <CustomVideoConference />
       <RoomAudioRenderer />

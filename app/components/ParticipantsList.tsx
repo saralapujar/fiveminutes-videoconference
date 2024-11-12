@@ -1,6 +1,7 @@
 import { useLocalParticipant, useRemoteParticipants, useRoomContext } from '@livekit/components-react';
 import React, { useEffect, useState } from 'react';
-
+import { WaitingParticipant } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 export function ParticipantsList() {
   const { localParticipant } = useLocalParticipant();
   const remoteParticipants = useRemoteParticipants();
@@ -9,7 +10,9 @@ export function ParticipantsList() {
   const [showModal, setShowModal] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
   const [isFirstParticipant, setIsFirstParticipant] = useState(false);
+  const [waitingParticipants, setWaitingParticipants] = useState<WaitingParticipant[]>([]);
 
+  const router = useRouter();
   // Check if current participant is the first one
   useEffect(() => {
     const checkFirstParticipant = () => {
@@ -23,6 +26,21 @@ export function ParticipantsList() {
 
     checkFirstParticipant();
   }, [localParticipant, remoteParticipants]);
+
+  useEffect(() => {
+    if (!isFirstParticipant) return;
+
+    const fetchWaitingParticipants = async () => {
+      const response = await fetch(`/api/waiting-room?roomName=${room.name}`);
+      const data = await response.json();
+      setWaitingParticipants(data);
+    };
+
+    const interval = setInterval(fetchWaitingParticipants, 5000);
+    fetchWaitingParticipants();
+
+    return () => clearInterval(interval);
+  }, [isFirstParticipant, room.name]);
 
   const handleRemoveClick = (participantIdentity: string) => {
     // Only allow removal if current participant is the first one
@@ -51,12 +69,57 @@ export function ParticipantsList() {
       if (!response.ok) {
         throw new Error('Failed to remove participant');
       }
+      if (!response.ok) {
+        router.push('/');
+      }
+
     } catch (error) {
       console.error('Error removing participant:', error);
     }
     
     setShowModal(false);
     setSelectedParticipant(null);
+  };
+
+  const handleApproveParticipant = async (participantIdentity: string) => {
+    try {
+      // alert(`Approving participant ${participantIdentity}`);
+      // First generate approval token
+      const approveResponse = await fetch('/api/waiting-room/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomName: room.name,
+          participantIdentity
+        })
+      });
+
+      if (!approveResponse.ok) {
+        throw new Error('Failed to approve participant');
+      }
+
+      // Get the actual response data
+      const responseData = await approveResponse.json();
+      // alert(`Approving response: ${JSON.stringify(responseData)}`);
+
+      // Then remove from waiting list
+      await fetch('/api/waiting-room', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomName: room.name,
+          participantIdentity
+        })
+      });
+
+      // Update local state
+      setWaitingParticipants(prev => 
+        prev.filter(p => p.identity !== participantIdentity)
+      );
+
+    } catch (error) {
+      console.error('Error approving participant:', error);
+    }
   };
 
   return (
@@ -101,8 +164,6 @@ export function ParticipantsList() {
           padding: '16px',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           zIndex: 100,
-          animation: 'slideIn 0.3s ease-out',
-          backdropFilter: 'blur(10px)'
         }}>
           <div style={{
             display: 'flex',
@@ -226,6 +287,42 @@ export function ParticipantsList() {
               </div>
             ))}
           </div>
+
+          {/* Waiting Participants */}
+          {isFirstParticipant && waitingParticipants.length > 0 && (
+            <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+              <h4 style={{ color: '#fff', marginBottom: '0.5rem' }}>Waiting Room</h4>
+              {waitingParticipants.map((participant) => (
+                <div
+                  key={participant.identity}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem',
+                    background: 'rgba(255, 152, 0, 0.1)',
+                    borderRadius: '4px',
+                    marginBottom: '0.5rem'
+                  }}
+                >
+                  <span style={{ color: 'white' }}>{participant.name}</span>
+                  <button
+                    onClick={() => handleApproveParticipant(participant.identity)}
+                    style={{
+                      background: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Approve
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

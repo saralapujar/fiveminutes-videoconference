@@ -1,6 +1,20 @@
 import { LocalAudioTrack, LocalVideoTrack, videoCodecs } from 'livekit-client';
 import { VideoCodec } from 'livekit-client';
 
+export interface WaitingParticipant {
+  identity: string;
+  name: string;
+  timestamp: number;
+}
+
+export interface ConnectionDetails {
+  serverUrl: string;
+  roomName: string;
+  participantName: string;
+  participantToken: string;
+  isWaiting?: boolean;
+}
+
 export interface SessionProps {
   roomName: string;
   identity: string;
@@ -11,18 +25,6 @@ export interface SessionProps {
   forceRelay?: boolean;
 }
 
-export interface TokenResult {
-  identity: string;
-  accessToken: string;
-}
-
 export function isVideoCodec(codec: string): codec is VideoCodec {
   return videoCodecs.includes(codec as VideoCodec);
 }
-
-export type ConnectionDetails = {
-  serverUrl: string;
-  roomName: string;
-  participantName: string;
-  participantToken: string;
-};

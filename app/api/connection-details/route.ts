@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const metadata = request.nextUrl.searchParams.get('metadata') ?? '';
     const region = request.nextUrl.searchParams.get('region');
     const livekitServerUrl = region ? getLiveKitURL(region) : LIVEKIT_URL;
+    
     if (livekitServerUrl === undefined) {
       throw new Error('Invalid region');
     }
@@ -26,10 +27,23 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Missing required query parameter: participantName', { status: 400 });
     }
 
+    // Check waiting room status
+    const waitingRoomResponse = await fetch(`${request.nextUrl.origin}/api/waiting-room`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomName, participantName })
+    });
+
+    if (!waitingRoomResponse.ok) {
+      throw new Error('Failed to check waiting room status');
+    }
+
+    const { isFirst, identity } = await waitingRoomResponse.json();
+
     // Generate participant token
     const participantToken = await createParticipantToken(
       {
-        identity: `${participantName}__${randomString(4)}`,
+        identity: identity || `${participantName}__${randomString(4)}`,
         name: participantName,
         metadata,
       },
@@ -42,12 +56,16 @@ export async function GET(request: NextRequest) {
       roomName: roomName,
       participantToken: participantToken,
       participantName: participantName,
+      isWaiting: !isFirst
     };
+    
     return NextResponse.json(data);
   } catch (error) {
+    console.error('Connection details error:', error);
     if (error instanceof Error) {
       return new NextResponse(error.message, { status: 500 });
     }
+    return new NextResponse('Internal server error', { status: 500 });
   }
 }
 
